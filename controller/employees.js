@@ -55,9 +55,9 @@ exports.updateEmployee = async (req, res) => {
 
 exports.updateEmployeeAll = async (req, res) => {
     try {
-        const {  email, fname, lname, role_id, phone } = req.body;
-        connection.query('UPDATE `employees` SET  `email`= ?, `fname`= ?, `lname`= ?, `role_id`= ?, `phone`= ?, `updated_date`= now() WHERE id = ?',
-            [email, fname, lname, role_id, phone, req.params.no], function(err, results) {
+        const {  email, fname, lname, ranks_id, phone } = req.body;
+        connection.query('UPDATE `employees` SET  `email`= ?, `fname`= ?, `lname`= ?, `ranks_id`= ?, `phone`= ?, `updated_date`= now() WHERE id = ?',
+            [email, fname, lname, ranks_id, phone, req.params.no], function(err, results) {
                 res.json(results);
             }
         );
