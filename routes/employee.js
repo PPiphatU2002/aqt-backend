@@ -8,6 +8,6 @@ router.get('/:no', getEmployee);
 router.put('/update-password/:no', updateEmployeePassword);
 router.put('/update-employee/:no', updateEmployee);
 router.put('/update-employee-all/:no', updateEmployeeAll);
-router.delete('/:id', deleteEmployee);
+router.delete('/:no', deleteEmployee);
 
 module.exports = router;
