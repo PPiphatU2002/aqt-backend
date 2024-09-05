@@ -120,9 +120,9 @@ exports.checkEmailDuplicate = (req, res) => {
           res.status(500).json({ message: 'Internal Server Error' });
       } else {
           if (results[0].count > 0) {
-              res.status(400).json({ message: 'E-mail Already Exists' });
+              res.status(400).json({ message: 'E-Mail Already Exists' });
           } else {
-              res.status(200).json({ message: 'E-mail Is Available' });
+              res.status(200).json({ message: 'E-Mail Is Available' });
           }
       }
     }
