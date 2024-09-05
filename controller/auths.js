@@ -61,7 +61,7 @@ exports.refresh = async (req, res) => {
 
     res.json({
       employee: {
-        no: employeeData.id,
+        no: employeeData.no,
         fname: employeeData.fname,
         lname: employeeData.lname,
         email: employeeData.email,
