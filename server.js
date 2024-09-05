@@ -15,7 +15,8 @@ const DB_NAME = process.env.DB_NAME;
 const app = express();
 
 // นำเข้า routes ที่เราสร้างไว้
-const employeeRouters = require("./routes/employee");
+const employeeRoutes = require("./routes/employee");
+const authRoutes = require("./routes/auth");
 
 
 // ใช้ cors สำหรับการทำ Cross-Origin Resource Sharing
@@ -37,7 +38,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ใช้ routes ที่เราสร้างไว้
-app.use("/employees", employeeRouters);
+app.use("/employee", employeeRoutes);
+app.use('/auth', authRoutes);
 
 // สร้าง route ทดสอบ
 app.get('/', (req, res) => {
