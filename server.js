@@ -17,6 +17,7 @@ const app = express();
 // นำเข้า routes ที่เราสร้างไว้
 const employeeRoutes = require("./routes/employee");
 const authRoutes = require("./routes/auth");
+const logRoutes = require("./routes/log");
 
 
 // ใช้ cors สำหรับการทำ Cross-Origin Resource Sharing
@@ -40,6 +41,7 @@ app.use(cookieParser());
 // ใช้ routes ที่เราสร้างไว้
 app.use("/employee", employeeRoutes);
 app.use('/auth', authRoutes);
+app.use('/log', logRoutes);
 
 // สร้าง route ทดสอบ
 app.get('/', (req, res) => {

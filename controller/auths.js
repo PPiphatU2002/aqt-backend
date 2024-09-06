@@ -60,7 +60,7 @@ exports.refresh = async (req, res) => {
     }
 
     res.json({
-      employee: {
+      user: {
         no: employeeData.no,
         fname: employeeData.fname,
         lname: employeeData.lname,
@@ -82,25 +82,26 @@ exports.logout = async (req, res) => {
 
 exports.register = async (req, res) => {
   try {
-    const { email, password, fname, lname, ranks_id, phone, created_date, updated_date  } = req.body
+    const { email, password, fname, lname, ranks_id, phone, status, created_date, updated_date  } = req.body
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userData = {
+    const employeeData = {
       email,
       password: hashedPassword,
       fname,
       lname,
       ranks_id,
       phone,
+      status,
       created_date,
       updated_date,
     }
     connection.query("INSERT INTO employees SET ?", 
-      userData, function (err, results) {
+      employeeData, function (err, results) {
         if (err) {
           console.error("Employee Creation Failed", err);
           return res.status(500).json({ message: "Internal Server Error" });
         }
-        res.json({ message: "User Created", results });
+        res.json({ message: "Employee Created", results });
     }
     );
     

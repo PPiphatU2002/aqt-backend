@@ -62,10 +62,10 @@ exports.updateEmployeeAll = async (req, res) => {
             }
         );
 
-        console.log("User Updated Successfully");
+        console.log("Employee Updated Successfully");
 
     } catch (error) {
-        console.log("Update User Error", error);
+        console.log("Update Employee Error", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }
