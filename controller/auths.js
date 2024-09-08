@@ -78,12 +78,12 @@ exports.refresh = async (req, res) => {
 
 exports.logout = async (req, res) => {
   res.clearCookie("token");
-  res.json({ result: "Success" , message: "Logout Successful" });
+  res.json({ result: "Success", message: "Logout Successful" });
 }
 
 exports.register = async (req, res) => {
   try {
-    const { email, password, fname, lname, ranks_id, phone, status, created_date, updated_date  } = req.body
+    const { email, password, fname, lname, ranks_id, phone, status, created_date, updated_date } = req.body
     const hashedPassword = await bcrypt.hash(password, 10);
     const employeeData = {
       email,
@@ -96,16 +96,16 @@ exports.register = async (req, res) => {
       created_date,
       updated_date,
     }
-    connection.query("INSERT INTO employees SET ?", 
+    connection.query("INSERT INTO employees SET ?",
       employeeData, function (err, results) {
         if (err) {
           console.error("Employee Creation Failed", err);
           return res.status(500).json({ message: "Internal Server Error" });
         }
         res.json({ message: "Employee Created", results });
-    }
+      }
     );
-    
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -115,17 +115,17 @@ exports.register = async (req, res) => {
 exports.checkEmailDuplicate = (req, res) => {
   const { email } = req.body;
 
-  connection.query('SELECT COUNT(*) AS count FROM employees WHERE email = ?', 
+  connection.query('SELECT COUNT(*) AS count FROM employees WHERE email = ?',
     [email], function (err, results) {
       if (err) {
-          console.error('Error Checking E-mail:', err);
-          res.status(500).json({ message: 'Internal Server Error' });
+        console.error('Error Checking E-mail:', err);
+        res.status(500).json({ message: 'Internal Server Error' });
       } else {
-          if (results[0].count > 0) {
-              res.status(400).json({ message: 'E-Mail Already Exists' });
-          } else {
-              res.status(200).json({ message: 'E-Mail Is Available' });
-          }
+        if (results[0].count > 0) {
+          res.status(400).json({ message: 'E-Mail Already Exists' });
+        } else {
+          res.status(200).json({ message: 'E-Mail Is Available' });
+        }
       }
     }
   );

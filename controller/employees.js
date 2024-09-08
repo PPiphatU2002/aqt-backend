@@ -2,17 +2,17 @@ const bcrypt = require("bcrypt");
 const { connection } = require("../database");
 
 exports.getEmployees = (req, res) => {
-    connection.query('SELECT * FROM `employees`', 
-        function(err, results, fields) {
+    connection.query('SELECT * FROM `employees`',
+        function (err, results, fields) {
             res.json(results);
-        }  
+        }
     );
 }
 
 exports.getEmployee = (req, res) => {
     const no = req.params.no;
-    connection.query('SELECT * FROM `employees` WHERE `no` = ?', 
-        [no], function(err, results) {
+    connection.query('SELECT * FROM `employees` WHERE `no` = ?',
+        [no], function (err, results) {
             res.json(results);
         }
     );
@@ -23,7 +23,7 @@ exports.updateEmployeePassword = async (req, res) => {
         const { password } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
         connection.query('UPDATE `employees` SET `password`= ?, `updated_date`= now() WHERE no = ?',
-            [hashedPassword, req.params.id], function(err, results) {
+            [hashedPassword, req.params.id], function (err, results) {
                 res.json(results);
             }
         );
@@ -38,9 +38,9 @@ exports.updateEmployeePassword = async (req, res) => {
 
 exports.updateEmployee = async (req, res) => {
     try {
-        const { fname, lname, phone} = req.body;
+        const { fname, lname, phone } = req.body;
         connection.query('UPDATE `employees` SET `fname`= ?, `lname`= ?, `phone`= ?, `updated_date`= now() WHERE no = ?',
-            [fname, lname, phone , req.params.no], function(err, results) {
+            [fname, lname, phone, req.params.no], function (err, results) {
                 res.json(results);
             }
         );
@@ -55,9 +55,9 @@ exports.updateEmployee = async (req, res) => {
 
 exports.updateEmployeeAll = async (req, res) => {
     try {
-        const {  email, fname, lname, ranks_id, phone } = req.body;
+        const { email, fname, lname, ranks_id, phone } = req.body;
         connection.query('UPDATE `employees` SET  `email`= ?, `fname`= ?, `lname`= ?, `ranks_id`= ?, `phone`= ?, `updated_date`= now() WHERE id = ?',
-            [email, fname, lname, ranks_id, phone, req.params.no], function(err, results) {
+            [email, fname, lname, ranks_id, phone, req.params.no], function (err, results) {
                 res.json(results);
             }
         );
@@ -73,8 +73,8 @@ exports.updateEmployeeAll = async (req, res) => {
 exports.deleteEmployee = (req, res) => {
     try {
         const EmployeeId = req.params.no;
-        connection.query('DELETE FROM `employees` WHERE no = ?', 
-            [EmployeeId], function(err, results) {
+        connection.query('DELETE FROM `employees` WHERE no = ?',
+            [EmployeeId], function (err, results) {
                 res.json({ message: "Employee Deleted", results });
             }
         );
