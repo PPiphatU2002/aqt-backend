@@ -7,6 +7,5 @@ router.post('/login', login);
 router.get('/refresh', refresh);
 router.delete('/logout', logout);
 router.post('/register', register);
-router.post('/check-email-duplicate', checkEmailDuplicate);
 
 module.exports = router;

@@ -83,50 +83,40 @@ exports.logout = async (req, res) => {
 
 exports.register = async (req, res) => {
   try {
-    const { email, password, fname, lname, ranks_id, phone, status, created_date, updated_date } = req.body
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const employeeData = {
-      email,
-      password: hashedPassword,
-      fname,
-      lname,
-      ranks_id,
-      phone,
-      status,
-      created_date,
-      updated_date,
-    }
-    connection.query("INSERT INTO employees SET ?",
-      employeeData, function (err, results) {
-        if (err) {
-          console.error("Employee Creation Failed", err);
-          return res.status(500).json({ message: "Internal Server Error" });
-        }
-        res.json({ message: "Employee Created", results });
+    const { email, password, fname, lname, ranks_id, phone, status, created_date, updated_date } = req.body;
+    connection.query('SELECT COUNT(*) AS count FROM employees WHERE email = ?', [email], async function (err, results) {
+      if (err) {
+        console.error('Error Checking E-mail:', err);
+        return res.status(500).json({ message: 'Internal Server Error' });
       }
-    );
+
+      if (results[0].count > 0) {
+        return res.status(400).json({ message: 'E-Mail Already Exists' });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const employeeData = {
+        email,
+        password: hashedPassword,
+        fname,
+        lname,
+        ranks_id,
+        phone,
+        status,
+        created_date,
+        updated_date,
+      };
+
+      connection.query('INSERT INTO employees SET ?', employeeData, function (err, results) {
+        if (err) {
+          console.error('Employee Creation Failed', err);
+          return res.status(500).json({ message: 'Internal Server Error' });
+        }
+        res.json({ message: 'Employee Created', results });
+      });
+    });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
-}
-
-exports.checkEmailDuplicate = (req, res) => {
-  const { email } = req.body;
-
-  connection.query('SELECT COUNT(*) AS count FROM employees WHERE email = ?',
-    [email], function (err, results) {
-      if (err) {
-        console.error('Error Checking E-mail:', err);
-        res.status(500).json({ message: 'Internal Server Error' });
-      } else {
-        if (results[0].count > 0) {
-          res.status(400).json({ message: 'E-Mail Already Exists' });
-        } else {
-          res.status(200).json({ message: 'E-Mail Is Available' });
-        }
-      }
-    }
-  );
 };
