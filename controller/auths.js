@@ -83,7 +83,7 @@ exports.logout = async (req, res) => {
 
 exports.register = async (req, res) => {
   try {
-    const { email, password, fname, lname, ranks_id, phone, status, created_date, updated_date } = req.body;
+    const { email, password, fname, lname, ranks_id, phone, gender, status, created_date, updated_date } = req.body;
     connection.query('SELECT COUNT(*) AS count FROM employees WHERE email = ?', [email], async function (err, results) {
       if (err) {
         console.error('Error Checking E-mail:', err);
@@ -101,6 +101,7 @@ exports.register = async (req, res) => {
         lname,
         ranks_id,
         phone,
+        gender,
         status,
         created_date,
         updated_date,
