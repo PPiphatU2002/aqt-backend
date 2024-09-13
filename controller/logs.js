@@ -28,7 +28,7 @@ exports.getLog = (req, res) => {
 
 exports.addLogs = (req, res) => {
   try {
-    const { stocks_detail_id, stocks_id, transactions_id, users_id, ports_id, form_id, type, action, detail, emp_name, emp_email, time } = req.body;
+    const { stocks_detail_id, stocks_id, transactions_id, users_id, ports_id, form_id, type, action, detail, emp_name, emp_email, picture,time } = req.body;
     const logData = {
       stocks_detail_id,
       stocks_id,
@@ -41,6 +41,7 @@ exports.addLogs = (req, res) => {
       detail,
       emp_name,
       emp_email,
+      picture,
       time,
     }
     connection.query('INSERT INTO `logs` SET ?',
