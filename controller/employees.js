@@ -18,6 +18,15 @@ exports.getEmployee = (req, res) => {
     );
 }
 
+exports.getEmployeeEmail = (req, res) => {
+    const email = req.params.email;
+    connection.query('SELECT * FROM `employees` WHERE `email` = ?', 
+        [email], function (err, results) {
+        res.json(results);
+    }
+    );
+}
+
 exports.updateEmployeePassword = async (req, res) => {
     try {
         const { password } = req.body;
