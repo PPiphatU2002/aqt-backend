@@ -41,7 +41,7 @@ exports.updateEmployeePassword = async (req, res) => {
         const { password } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
         connection.query('UPDATE `employees` SET `password`= ?, `updated_date`= now() WHERE no = ?',
-            [hashedPassword, req.params.id], function (err, results) {
+            [hashedPassword, req.params.no], function (err, results) {
                 res.json(results);
             }
         );
@@ -56,20 +56,24 @@ exports.updateEmployeePassword = async (req, res) => {
 
 exports.updateEmployee = async (req, res) => {
     try {
-        const { fname, lname, phone } = req.body;
-        connection.query('UPDATE `employees` SET `fname`= ?, `lname`= ?, `phone`= ?, `updated_date`= now() WHERE no = ?',
-            [fname, lname, phone, req.params.no], function (err, results) {
-                res.json(results);
-            }
-        );
-
-        console.log("Employee Updated Successfully");
-
+      console.log('Received data:', req.body);
+      const { fname, lname, phone, gender } = req.body;
+      connection.query('UPDATE `employees` SET `fname`= ?, `lname`= ?, `phone`= ?, `gender`= ?, `updated_date`= now() WHERE no = ?',
+        [fname, lname, phone, gender, req.params.no], function (err, results) {
+          if (err) {
+            console.error('Error updating employee:', err);
+            return res.status(500).json({ message: 'Error updating employee' });
+          }
+          res.json(results);
+        }
+      );
+      console.log('Employee Updated Successfully');
     } catch (error) {
-        console.log("Update Employee Error", error);
-        return res.status(500).json({ message: "Internal Server Error" });
+      console.log('Update Employee Error', error);
+      return res.status(500).json({ message: 'Internal Server Error' });
     }
-}
+  }
+  
 
 exports.updateEmployeeAll = async (req, res) => {
     try {
