@@ -67,6 +67,7 @@ exports.refresh = async (req, res) => {
         email: employeeData.email,
         ranks_id: employeeData.ranks_id,
         status: employeeData.status,
+        picture: employeeData.picture
       },
     });
 
