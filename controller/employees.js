@@ -106,3 +106,12 @@ exports.deleteEmployee = (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }
+
+exports.getEmployeesByStatus = (req, res) => {
+    const type = req.params.no;
+    connection.query('SELECT * FROM `employees` WHERE `status` = ?',
+      [type], function (err, results) {
+        res.json(results);
+      }
+    );
+  }
