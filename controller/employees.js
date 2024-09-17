@@ -92,6 +92,21 @@ exports.updateEmployeeAll = async (req, res) => {
     }
 }
 
+exports.updateEmployeeStatus = async (req, res) => {
+    try {
+        const { status} = req.body;
+        connection.query('UPDATE `employees` SET `status` = ?, `updated_date` = now() WHERE `no` = ?',
+            [status, req.params.no], function (err, results) {
+                res.json(results);
+            }
+        );
+        console.log("Employee Updated Successfully");
+    } catch (error) {
+        console.log("Update Employee Error", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
 exports.deleteEmployee = (req, res) => {
     try {
         const EmployeeId = req.params.no;
