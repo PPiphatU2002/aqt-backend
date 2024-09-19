@@ -75,22 +75,33 @@ exports.updateEmployee = async (req, res) => {
   }
   
 
-exports.updateEmployeeAll = async (req, res) => {
+  exports.updateEmployeeAll = async (req, res) => {
     try {
-        const { email, fname, lname, ranks_id, phone } = req.body;
-        connection.query('UPDATE `employees` SET  `email`= ?, `fname`= ?, `lname`= ?, `ranks_id`= ?, `phone`= ?, `updated_date`= now() WHERE no = ?',
-            [email, fname, lname, ranks_id, phone, req.params.no], function (err, results) {
-                res.json(results);
+        const { email, fname, lname, ranks_id, phone, gender, status } = req.body;
+        connection.query('SELECT * FROM `employees` WHERE `email` = ? AND `no` != ?', [email, req.params.no], (err, results) => {
+            if (err) {
+                console.error('Error checking email:', err);
+                return res.status(500).json({ message: 'Internal Server Error' });
             }
-        );
-
-        console.log("Employee Updated Successfully");
-
+            if (results.length > 0) {
+                return res.status(400).json({ message: 'Email already exists' });
+            }
+            connection.query('UPDATE `employees` SET `email` = ?, `fname` = ?, `lname` = ?, `ranks_id` = ?, `phone` = ?, `gender` = ?, `status` = ?, `updated_date` = now() WHERE `no` = ?',
+                [email, fname, lname, ranks_id, phone, gender, status, req.params.no], (err, results) => {
+                    if (err) {
+                        console.error('Error updating employee:', err);
+                        return res.status(500).json({ message: 'Error updating employee' });
+                    }
+                    res.json(results);
+                }
+            );
+            console.log("Employee Updated Successfully");
+        });
     } catch (error) {
         console.log("Update Employee Error", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
-}
+};
 
 exports.updateEmployeeStatus = async (req, res) => {
     try {
