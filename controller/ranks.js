@@ -9,9 +9,9 @@ exports.getRanks = (req, res) => {
 }
 
 exports.getRank = (req, res) => {
-    const id = req.params.id;
+    const no = req.params.no;
     connection.query('SELECT * FROM `ranks` WHERE `no` = ?', 
-        [id], function(err, results) {
+        [no], function(err, results) {
             res.json(results);
         }
     );
@@ -37,8 +37,8 @@ exports.addRank = (req, res) => {
 exports.updateRank = (req, res) => {
     try {
         const { name } = req.body;
-        connection.query("UPDATE `ranks` SET `name` = ? WHERE no = ?", 
-            [name, req.params.id], function(err, results) {
+        connection.query("UPDATE `ranks` SET `name` = ? , `updated_date`= now() WHERE no = ?", 
+            [name, req.params.no], function(err, results) {
             res.json(results);
         }
     );

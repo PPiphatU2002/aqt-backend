@@ -50,8 +50,6 @@ exports.addLogs = (req, res) => {
       }
     );
 
-    // console.log("Log added successfully");
-
   } catch (error) {
     console.log("Add Log Error", error);
     return res.status(500).json({ message: "Internal Server Error" });
