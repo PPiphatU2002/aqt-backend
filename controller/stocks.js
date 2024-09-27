@@ -19,7 +19,7 @@ exports.getStock = (req, res) => {
 
 exports.addStock = async (req, res) => {
     try {
-        const { name, type, low_price, up_price, dividend_amount, closing_price, comment, emp_id, created_date, updated_date } = req.body;
+        const { name, set_id, low_price, up_price, dividend_amount, closing_price, comment,comment_two, emp_id, created_date, updated_date } = req.body;
         connection.query('SELECT * FROM `stocks` WHERE `name` = ?',
             [name], function (err, results) {
                 if (results.length > 0) {
@@ -27,12 +27,13 @@ exports.addStock = async (req, res) => {
                 } else {
                     const customerData = {
                         name,
-                        type,
+                        set_id,
                         low_price,
                         up_price,
                         dividend_amount,
                         closing_price,
                         comment,
+                        comment_two,
                         emp_id,
                         created_date,
                         updated_date,
@@ -58,7 +59,7 @@ exports.addStock = async (req, res) => {
 
 exports.updateStock = async (req, res) => {
     try {
-        const { name, type, low_price, up_price, dividend_amount, closing_price, comment, emp_id } = req.body;
+        const { name, set_id, low_price, up_price, dividend_amount, closing_price, comment, comment_two, emp_id } = req.body;
         const stockId = req.params.no;
         const [existingStocks] = await connection.promise().query('SELECT * FROM `stocks` WHERE `name` = ? AND `no` != ?', [name, stockId]);
         if (existingStocks.length > 0) {
@@ -66,12 +67,13 @@ exports.updateStock = async (req, res) => {
         }
         const updatedData = {
             name,
-            type,
+            set_id,
             low_price,
             up_price,
             dividend_amount,
             closing_price,
             comment,
+            comment_two,
             emp_id,
             updated_date: new Date()
         };
