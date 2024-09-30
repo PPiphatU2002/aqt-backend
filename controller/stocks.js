@@ -19,7 +19,7 @@ exports.getStock = (req, res) => {
 
 exports.addStock = async (req, res) => {
     try {
-        const { name, set_id, low_price, up_price, dividend_amount, closing_price, comment,comment_two, emp_id, created_date, updated_date } = req.body;
+        const { name, set_id, low_price, up_price, dividend_amount, closing_price, comment, comment_two, emp_id, created_date, updated_date } = req.body;
         connection.query('SELECT * FROM `stocks` WHERE `name` = ?',
             [name], function (err, results) {
                 if (results.length > 0) {

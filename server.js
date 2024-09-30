@@ -22,6 +22,7 @@ const customerRoutes = require('./routes/customer');
 const typeRoutes = require('./routes/type');
 const formRoutes = require('./routes/from');
 const stockRoutes = require('./routes/stock');
+const setRoutes = require('./routes/set');
 
 // ใช้ cors สำหรับการทำ Cross-Origin Resource Sharing
 app.use(cors({
@@ -48,6 +49,7 @@ app.use('/customer', customerRoutes);
 app.use('/type', typeRoutes);
 app.use('/from', formRoutes);
 app.use('/stock', stockRoutes);
+app.use('/set', setRoutes);
 
 // สร้าง route ทดสอบ
 app.get('/', (req, res) => {

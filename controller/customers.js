@@ -28,7 +28,7 @@ exports.getCustomersByType = (req, res) => {
 
 exports.addCustomer = async (req, res) => {
     try {
-        const { id, nickname, type_id,  from_id, emp_id, created_date, updated_date } = req.body;
+        const { id, nickname, type_id, emp_id, created_date, updated_date } = req.body;
         connection.query('SELECT * FROM `customers` WHERE `id` = ?',
             [id], function (err, results) {
                 if (results.length > 0) {
@@ -38,7 +38,6 @@ exports.addCustomer = async (req, res) => {
                         id,
                         nickname,
                         type_id,
-                        from_id,
                         emp_id,
                         created_date,
                         updated_date,
@@ -71,7 +70,7 @@ exports.updateCustomer = async (req, res) => {
                 if (results.length > 0) {
                     return res.status(400).json({ message: "ID already exists for another customer" });
                 } else {
-                    connection.query('UPDATE `customers` SET `id`= ?, `nickname`= ?, `type_id`= ?, `from_id`= ?, `emp_id`= ?, `updated_date`= now() WHERE no = ?',
+                    connection.query('UPDATE `customers` SET `id`= ?, `nickname`= ?, `type_id`= ?, `emp_id`= ?, `updated_date`= now() WHERE no = ?',
                         [id, nickname, type_id, from_id, emp_id, customerNo], function (err, results) {
                             if (err) {
                                 console.error(err);
