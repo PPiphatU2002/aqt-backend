@@ -1,6 +1,8 @@
 // server.js
 require('dotenv').config();
 
+const fs = require('fs');
+const { spawn } = require('child_process');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -56,6 +58,29 @@ app.get('/', (req, res) => {
     console.log('The AI Quant Tech API Is Working');
     res.send('The AI Quant Tech API Is Working');
 });
+
+app.get('/run-script', (req, res) => {
+    const pythonProcess = spawn('python', ['C:\\AQT-P\\aqt-backend\\datafeed\\Close_Price.py']);
+
+    pythonProcess.on('close', (code) => {
+        if (code === 0) {
+            // ถ้าสคริปต์ทำงานเสร็จเรียบร้อยแล้ว, อ่านไฟล์ CSV
+            const filePath = path.join(__dirname, 'datafeed\\last_day_close_prices.csv');
+            fs.readFile(filePath, 'utf8', (err, data) => {
+                if (err) {
+                    console.error('Error reading CSV file:', err);
+                    return res.status(500).send('Error reading CSV file');
+                }
+                res.setHeader('Content-Type', 'text/csv');
+                res.send(data);
+            });
+        } else {
+            console.error(`Python script exited with code ${code}`);
+            res.status(500).send('Error running Python script');
+        }
+    });
+});
+
 app.get('/test', (req, res) => {
     console.log('Server Is Running');
     res.send('Server Is Running');

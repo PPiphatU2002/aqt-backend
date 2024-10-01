@@ -4,6 +4,9 @@
 #     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
 
 # Node artifact files
+datafeed/Last_Day_Close_Prices.csv
+datafeed/symbol/
+.venv
 node_modules/
 build/
 dist/
