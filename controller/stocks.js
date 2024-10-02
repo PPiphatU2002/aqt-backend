@@ -19,7 +19,7 @@ exports.getStock = (req, res) => {
 
 exports.addStock = async (req, res) => {
     try {
-        const { name, set_id, low_price, up_price, dividend_amount, closing_price, comment, comment_two, emp_id, created_date, updated_date } = req.body;
+        const { name, set_id, dividend_amount, closing_price, comment, emp_id, created_date, updated_date } = req.body;
         connection.query('SELECT * FROM `stocks` WHERE `name` = ?',
             [name], function (err, results) {
                 if (results.length > 0) {
@@ -28,12 +28,9 @@ exports.addStock = async (req, res) => {
                     const customerData = {
                         name,
                         set_id,
-                        low_price,
-                        up_price,
                         dividend_amount,
                         closing_price,
                         comment,
-                        comment_two,
                         emp_id,
                         created_date,
                         updated_date,
@@ -59,7 +56,7 @@ exports.addStock = async (req, res) => {
 
 exports.updateStock = async (req, res) => {
     try {
-        const { name, set_id, low_price, up_price, dividend_amount, closing_price, comment, comment_two, emp_id } = req.body;
+        const { name, set_id, dividend_amount, closing_price, comment, emp_id } = req.body;
         const stockId = req.params.no;
         const [existingStocks] = await connection.promise().query('SELECT * FROM `stocks` WHERE `name` = ? AND `no` != ?', [name, stockId]);
         if (existingStocks.length > 0) {
@@ -68,12 +65,9 @@ exports.updateStock = async (req, res) => {
         const updatedData = {
             name,
             set_id,
-            low_price,
-            up_price,
             dividend_amount,
             closing_price,
             comment,
-            comment_two,
             emp_id,
             updated_date: new Date()
         };
@@ -105,5 +99,34 @@ exports.deleteStock = (req, res) => {
     } catch (error) {
         console.log("Delete Stock error", error);
         return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+exports.updateClosePriceByName = async (req, res) => {
+    try {
+        const { name, closing_price, emp_id  } = req.body;
+
+        const [existingStocks] = await connection.promise().query('SELECT * FROM `stocks` WHERE `name` = ?', [name]);
+        if (existingStocks.length === 0) {
+            return res.status(404).json({ message: "ไม่พบหุ้นที่มีชื่อดังกล่าว" });
+        }
+
+        const updatedData = {
+            emp_id,
+            closing_price,
+            updated_date: new Date()
+        };
+
+        connection.query("UPDATE `stocks` SET ? WHERE `name` = ?", [updatedData, name], (err, results) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัปเดตราคาปิด" });
+            }
+            res.json({ message: "อัปเดตราคาปิดสำเร็จ", results });
+        });
+
+    } catch (error) {
+        console.log("เกิดข้อผิดพลาดในการอัปเดตราคาปิด", error);
+        return res.status(500).json({ message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" });
     }
 }

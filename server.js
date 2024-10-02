@@ -59,13 +59,25 @@ app.get('/', (req, res) => {
     res.send('The AI Quant Tech API Is Working');
 });
 
-app.get('/run-script', (req, res) => {
-    const pythonProcess = spawn('python', ['C:\\AQT-P\\aqt-backend\\datafeed\\Close_Price.py']);
+let pythonProcess;
+app.get('/run-closeprice', (req, res) => {
+    console.log("Received request to run Close_Price.py");
+
+    const pythonScriptPath = path.join(__dirname, 'datafeed', 'Close_Price.py');
+    pythonProcess = spawn('python', [pythonScriptPath]);
+
+    pythonProcess.stdout.on('data', (data) => {
+        console.log(`Python output: ${data}`);
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        console.error(`Python error: ${data}`);
+    });
 
     pythonProcess.on('close', (code) => {
+        console.log(`Python script exited with code ${code}`);
         if (code === 0) {
-            // ถ้าสคริปต์ทำงานเสร็จเรียบร้อยแล้ว, อ่านไฟล์ CSV
-            const filePath = path.join(__dirname, 'datafeed\\last_day_close_prices.csv');
+            const filePath = path.join(__dirname, 'datafeed', 'last_day_close_prices.csv');
             fs.readFile(filePath, 'utf8', (err, data) => {
                 if (err) {
                     console.error('Error reading CSV file:', err);
@@ -75,10 +87,22 @@ app.get('/run-script', (req, res) => {
                 res.send(data);
             });
         } else {
-            console.error(`Python script exited with code ${code}`);
+            console.error(`Error: Python script exited with code ${code}`);
             res.status(500).send('Error running Python script');
         }
     });
+});
+
+// Route สำหรับยกเลิกการทำงานของ Python script
+app.post('/cancel-closeprice', (req, res) => {
+    if (pythonProcess) {
+        pythonProcess.kill('SIGINT'); // ยกเลิก process
+        pythonProcess = null; // รีเซ็ตตัวแปร pythonProcess
+        console.log('Python script has been canceled.');
+        res.send('Python script has been canceled.');
+    } else {
+        res.status(400).send('No running Python script to cancel.');
+    }
 });
 
 app.get('/test', (req, res) => {

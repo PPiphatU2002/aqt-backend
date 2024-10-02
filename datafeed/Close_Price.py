@@ -54,7 +54,7 @@ def fetch_hist_data(symbol, data_storage, max_retries=3):
     retries = 0
     while retries < max_retries:
         try:
-            hist_data_mins = tv.get_hist(symbol=symbol, exchange='SET', interval=Interval.in_1_minute, n_bars=10)
+            hist_data_mins = tv.get_hist(symbol=symbol, exchange='SET', interval=Interval.in_1_minute, n_bars=5000)
             with data_lock:
                 data_storage[symbol] = hist_data_mins if hist_data_mins is not None else None
             if hist_data_mins is not None:
