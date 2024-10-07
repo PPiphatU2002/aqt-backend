@@ -112,7 +112,7 @@ def export_data_to_csv_multithreaded(data_storage, save_path):
 
 # กำหนด path สำหรับการบันทึกไฟล์
 base_dir = os.path.dirname(os.path.abspath(__file__))  
-save_path = os.path.join(base_dir, 'symbol')  # ปรับให้เป็นโฟลเดอร์ Symbol
+save_path = os.path.join(base_dir, 'close_price')  # ปรับให้เป็นโฟลเดอร์ Symbol
 
 # สร้าง directory ถ้ายังไม่มี
 os.makedirs(save_path, exist_ok=True)
@@ -151,7 +151,7 @@ for symbol in symbols_to_fetch:
 # ใช้ os.path.join สำหรับการบันทึกไฟล์สุดท้าย
 if not last_day_df.empty:
     last_day_df = last_day_df[['datetime', 'symbol', 'close']]
-    last_day_save_path = os.path.join(base_dir, 'Last_Day_Close_Prices.csv')  # บันทึกใน base_dir
+    last_day_save_path = os.path.join(base_dir, 'last_day_close_price.csv')  # บันทึกใน base_dir
     last_day_df.to_csv(last_day_save_path, index=False)
 else:
     print("No last day data to save.")

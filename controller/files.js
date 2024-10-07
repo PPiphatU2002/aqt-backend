@@ -45,6 +45,11 @@ exports.getProfile = (req, res) => {
     });
 }
 
+exports.readDefault = (req, res) => {
+    const { picture } = req.params;
+    res.sendFile(path.join(__dirname, `../uploads/default/${picture}`));
+}
+
 exports.readProfile = (req, res) => {
     const { picture } = req.params;
     res.sendFile(path.join(__dirname, `../uploads/profile/${picture}`));

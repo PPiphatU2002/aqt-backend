@@ -63,9 +63,9 @@ app.get('/', (req, res) => {
 
 let pythonProcess;
 app.get('/run-closeprice', (req, res) => {
-    console.log("Received request to run Close_Price.py");
+    console.log("Received request to run close_price.py");
 
-    const pythonScriptPath = path.join(__dirname, 'datafeed', 'Close_Price.py');
+    const pythonScriptPath = path.join(__dirname, 'stock', 'close_price.py');
     pythonProcess = spawn('python', [pythonScriptPath]);
 
     pythonProcess.stdout.on('data', (data) => {
@@ -79,7 +79,7 @@ app.get('/run-closeprice', (req, res) => {
     pythonProcess.on('close', (code) => {
         console.log(`Python script exited with code ${code}`);
         if (code === 0) {
-            const filePath = path.join(__dirname, 'datafeed', 'last_day_close_prices.csv');
+            const filePath = path.join(__dirname, 'stock', 'last_day_close_price.csv');
             fs.readFile(filePath, 'utf8', (err, data) => {
                 if (err) {
                     console.error('Error reading CSV file:', err);
