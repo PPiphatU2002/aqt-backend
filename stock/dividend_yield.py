@@ -13,17 +13,33 @@ from datetime import datetime
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.options import Options
 from seleniumwire.utils import decode
+from screeninfo import get_monitors  # ต้องติดตั้ง screeninfo ด้วย pip install screeninfo
+
+# Function to get screen size
+def get_screen_size():
+    screen = get_monitors()[0]
+    return screen.width, screen.height
 
 # Function to process a subset of symbols
 def process_symbols(symbols_subset, responses):
     chrome_options = Options()
-    chrome_options.add_argument('--headless=new')  # Headless mode
+    chrome_options.add_argument('--headless')  # Uncomment if you want headless mode
     chrome_options.add_argument('--disable-gpu')  # Disable GPU
     chrome_options.add_argument('--no-sandbox')  # Bypass OS security model
     chrome_options.add_argument('--disable-dev-shm-usage')  # Overcome limited resource problems
-    chrome_options.add_argument('--window-size=1920,1080')  # Set window size
+    chrome_options.add_argument('--window-size=400,300')  # Set window size
 
-    # Create a new instance of the Chrome driver
+    # Get screen size to calculate position
+    screen_width, screen_height = get_screen_size()
+    window_width, window_height = 400, 300  # Define desired window size
+
+    # Calculate position to center the window
+    x_position = max(0, (screen_width // 1) - (window_width // 1))
+    y_position = max(0, (screen_height // 1) - (window_height // 1))
+
+    chrome_options.add_argument(f'--window-position={x_position},{y_position}')  # Set window position
+
+    # Create a new instance of Chrome driver
     local_driver = webdriver.Chrome(options=chrome_options)
 
     for symbol in symbols_subset:

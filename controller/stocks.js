@@ -130,3 +130,32 @@ exports.updateClosePriceByName = async (req, res) => {
         return res.status(500).json({ message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" });
     }
 }
+
+exports.updateDividendYieldByName = async (req, res) => {
+    try {
+        const { name, dividend_amount, emp_id  } = req.body;
+
+        const [existingStocks] = await connection.promise().query('SELECT * FROM `stocks` WHERE `name` = ?', [name]);
+        if (existingStocks.length === 0) {
+            return res.status(404).json({ message: "ไม่พบหุ้นที่มีชื่อดังกล่าว" });
+        }
+
+        const updatedData = {
+            emp_id,
+            dividend_amount,
+            updated_date: new Date()
+        };
+
+        connection.query("UPDATE `stocks` SET ? WHERE `name` = ?", [updatedData, name], (err, results) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ message: "เกิดข้อผิดพลาดในการจำนวนปันผล" });
+            }
+            res.json({ message: "อัปเดตจำนวนปันผลสำเร็จ", results });
+        });
+
+    } catch (error) {
+        console.log("เกิดข้อผิดพลาดในการจำนวนปันผล", error);
+        return res.status(500).json({ message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" });
+    }
+}

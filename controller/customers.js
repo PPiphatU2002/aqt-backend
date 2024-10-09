@@ -17,15 +17,6 @@ exports.getCustomer = (req, res) => {
     );
 }
 
-exports.getCustomersByType = (req, res) => {
-    const typeNo = req.params.no;
-    connection.query('SELECT * FROM `customers` WHERE `type_id` = ?',
-        [typeNo], function (err, results) {
-            res.json(results);
-        }
-    );
-}
-
 exports.addCustomer = async (req, res) => {
     try {
         const { id, nickname, type_id, base_id, emp_id, created_date, updated_date } = req.body;

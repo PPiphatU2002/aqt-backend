@@ -26,6 +26,7 @@ const formRoutes = require('./routes/from');
 const stockRoutes = require('./routes/stock');
 const setRoutes = require('./routes/set');
 const baseRoutes = require('./routes/base');
+const detailRoutes = require('./routes/detail');
 
 // ใช้ cors สำหรับการทำ Cross-Origin Resource Sharing
 app.use(cors({
@@ -54,6 +55,7 @@ app.use('/from', formRoutes);
 app.use('/stock', stockRoutes);
 app.use('/set', setRoutes);
 app.use('/base', baseRoutes);
+app.use('/detail', detailRoutes);
 
 // สร้าง route ทดสอบ
 app.get('/', (req, res) => {
@@ -62,7 +64,7 @@ app.get('/', (req, res) => {
 });
 
 let pythonProcess;
-app.get('/run-closeprice', (req, res) => {
+app.get('/run-close-price', (req, res) => {
     console.log("Received request to run close_price.py");
 
     const pythonScriptPath = path.join(__dirname, 'stock', 'close_price.py');
@@ -96,7 +98,7 @@ app.get('/run-closeprice', (req, res) => {
 });
 
 // Route สำหรับยกเลิกการทำงานของ Python script
-app.post('/cancel-closeprice', (req, res) => {
+app.post('/cancel-close-price', (req, res) => {
     if (pythonProcess) {
         pythonProcess.kill('SIGINT'); // ยกเลิก process
         pythonProcess = null; // รีเซ็ตตัวแปร pythonProcess
@@ -104,6 +106,52 @@ app.post('/cancel-closeprice', (req, res) => {
         res.send('Python script has been canceled.');
     } else {
         res.status(400).send('No running Python script to cancel.');
+    }
+});
+
+let dividendProcess;
+app.get('/run-dividend-yield', (req, res) => {
+    console.log("Received request to run dividend_yield.py");
+
+    const pythonScriptPath = path.join(__dirname, 'stock', 'dividend_yield.py');
+    dividendProcess = spawn('python', [pythonScriptPath]);
+
+    dividendProcess.stdout.on('data', (data) => {
+        console.log(`Python output: ${data}`);
+    });
+
+    dividendProcess.stderr.on('data', (data) => {
+        console.error(`Python error: ${data}`);
+    });
+
+    dividendProcess.on('close', (code) => {
+        console.log(`Python script exited with code ${code}`);
+        if (code === 0) {
+            const filePath = path.join(__dirname, 'stock', 'summed_dividend_yield.csv');
+            fs.readFile(filePath, 'utf8', (err, data) => {
+                if (err) {
+                    console.error('Error reading CSV file:', err);
+                    return res.status(500).send('Error reading CSV file');
+                }
+                res.setHeader('Content-Type', 'text/csv');
+                res.send(data);
+            });
+        } else {
+            console.error(`Error: Python script exited with code ${code}`);
+            res.status(500).send('Error running Python script');
+        }
+    });
+});
+
+// Route to cancel the dividend yield script
+app.post('/cancel-dividend-yield', (req, res) => {
+    if (dividendProcess) {
+        dividendProcess.kill('SIGINT'); // Cancel the process
+        dividendProcess = null; // Reset the variable
+        console.log('Dividend yield script has been canceled.');
+        res.send('Dividend yield script has been canceled.');
+    } else {
+        res.status(400).send('No running dividend yield script to cancel.');
     }
 });
 
