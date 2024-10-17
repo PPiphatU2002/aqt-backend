@@ -4,56 +4,18 @@
 import json
 import pandas as pd
 import threading
-import re
 import csv
 import mysql.connector
 from dotenv import load_dotenv
 import os
+import multiprocessing
 from datetime import datetime
+import yfinance as yf  # Import yfinance
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.options import Options
 from seleniumwire.utils import decode
-from screeninfo import get_monitors  # ต้องติดตั้ง screeninfo ด้วย pip install screeninfo
-
-# Function to get screen size
-def get_screen_size():
-    screen = get_monitors()[0]
-    return screen.width, screen.height
-
-# Function to process a subset of symbols
-def process_symbols(symbols_subset, responses):
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')  # Uncomment if you want headless mode
-    chrome_options.add_argument('--disable-gpu')  # Disable GPU
-    chrome_options.add_argument('--no-sandbox')  # Bypass OS security model
-    chrome_options.add_argument('--disable-dev-shm-usage')  # Overcome limited resource problems
-    chrome_options.add_argument('--window-size=400,300')  # Set window size
-
-    # Get screen size to calculate position
-    screen_width, screen_height = get_screen_size()
-    window_width, window_height = 400, 300  # Define desired window size
-
-    # Calculate position to center the window
-    x_position = max(0, (screen_width // 1) - (window_width // 1))
-    y_position = max(0, (screen_height // 1) - (window_height // 1))
-
-    chrome_options.add_argument(f'--window-position={x_position},{y_position}')  # Set window position
-
-    # Create a new instance of Chrome driver
-    local_driver = webdriver.Chrome(options=chrome_options)
-
-    for symbol in symbols_subset:
-        try:
-            local_driver.get(f'https://www.set.or.th/en/market/product/stock/quote/{symbol}/rights-benefits')
-            for request in local_driver.requests:
-                if request.response and f"/api/set/stock/{symbol}/corporate-action?lang=en" in request.url:
-                    data = decode(request.response.body, request.response.headers.get('Content-Encoding', 'identity'))
-                    resp = json.loads(data.decode('utf-8'))
-                    responses.append(resp)
-                    break
-        except Exception as e:
-            print(f"Error processing symbol {symbol}: {e}")
-    local_driver.quit()
+from screeninfo import get_monitors
+import time
 
 # Load .env file
 load_dotenv()
@@ -74,9 +36,11 @@ def fetch_symbols_from_db():
             database=DB_NAME
         )
         cursor = connection.cursor()
+        
+        # Start transaction
         cursor.execute("SELECT name FROM stocks")
         result = cursor.fetchall()
-        symbols = [row[0] for row in result]
+        symbols = [row[0] + '.BK' for row in result]  # Add '.BK' for Thai stocks
         return symbols
     except mysql.connector.Error as e:
         print(f"Error connecting to the database: {e}")
@@ -85,145 +49,220 @@ def fetch_symbols_from_db():
             cursor.close()
             connection.close()
 
+# Function to retry fetching dividends if not found
+def retry_fetch_dividends(symbol):
+    try:
+        stock = yf.Ticker(symbol)
+        dividends = stock.dividends
+        
+        dividends.index = dividends.index.tz_localize(None)
+        
+        if not dividends.empty:
+            latest_date = dividends.index.max()
+            return dividends[dividends.index.year == latest_date.year]
+        return pd.Series()  # Return empty series if there's no data
+    except Exception as e:
+        print(f"Error fetching dividends for {symbol}: {e}")
+        return pd.Series()
+
+# Main processing function
+def process_symbols(symbols_subset, responses, lock, missing_symbols):
+    global processed_symbols  
+
+    for symbol in symbols_subset:
+        try:
+            stock = yf.Ticker(symbol)
+            dividends = stock.dividends
+            dividends.index = dividends.index.tz_localize(None)
+
+            if not dividends.empty:
+                latest_date = dividends.index.max()
+                dividends = dividends[dividends.index.year == latest_date.year]
+
+            if dividends.empty:
+                print(f"No dividend data for {symbol}, possibly delisted. Retrying...")
+                dividends = retry_fetch_dividends(symbol)
+
+            if dividends.empty:
+                print(f"Still no data for {symbol}, adding to missing symbols.")
+                with lock:
+                    missing_symbols.append(symbol)  
+                continue  
+
+            for date, dividend in dividends.items():  
+                responses.append({
+                    'symbol': symbol[:-3] if not symbol.startswith('$') else symbol,  
+                    'dividend': dividend,
+                    'xdate': date.strftime('%Y-%m-%d'),
+                    'dividendType': 'Cash',
+                    'ratio': 'N/A'
+                })
+        except Exception as e:
+            print(f"Error processing symbol {symbol}: {e}")
+
+        with lock:
+            processed_symbols += 1
+            progress = (processed_symbols / total_symbols) * 100
+            print(f"Progress: {progress:.2f}%")
+
+# Web scraping function for missing symbols
+def web_scrape_missing_symbols(symbols_subset, responses, lock):
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')  
+    chrome_options.add_argument('--disable-gpu')  
+    chrome_options.add_argument('--no-sandbox')  
+    chrome_options.add_argument('--disable-dev-shm-usage')  
+    chrome_options.add_argument('--window-size=400,300')
+
+    screen = get_monitors()[0]
+    screen_width, screen_height = screen.width, screen.height
+    window_width, window_height = 400, 300
+
+    x_position = max(0, (screen_width // 1) - (window_width // 1))
+    y_position = max(0, (screen_height // 1) - (window_height // 1))
+    chrome_options.add_argument(f'--window-position={x_position},{y_position}')
+
+    seleniumwire_options = {'verify_ssl': True}
+
+    local_driver = webdriver.Chrome(options=chrome_options, seleniumwire_options=seleniumwire_options)
+
+    for symbol in symbols_subset:
+        try:
+            local_driver.get(f'https://www.set.or.th/en/market/product/stock/quote/{symbol}/rights-benefits')
+            time.sleep(2)
+            for request in local_driver.requests:
+                if request.response and f"/api/set/stock/{symbol}/corporate-action?lang=en" in request.url:
+                    data = decode(request.response.body, request.response.headers.get('Content-Encoding', 'identity'))
+                    resp = json.loads(data.decode('utf-8'))
+                    if 'XD' in resp.get('type', ''):
+                        responses.append({
+                            'symbol': symbol,
+                            'dividend': resp.get('dividend', 'N/A'),
+                            'xdate': resp.get('xdate', 'N/A'),
+                            'dividendType': resp.get('dividendType', 'N/A'),
+                            'ratio': resp.get('ratio', 'N/A')
+                        })
+                    break
+        except Exception as e:
+            print(f"Error scraping symbol {symbol}: {e}")
+
+        with lock:
+            processed_symbols += 1
+            progress = (processed_symbols / total_symbols) * 100
+            print(f"Progress: {progress:.2f}%")
+
+    local_driver.quit()
+
 # Get symbols from the database
 symbols = fetch_symbols_from_db()
 
+total_symbols = len(symbols)
+processed_symbols = 0  
+missing_symbols = []
+
+lock = threading.Lock()
+
+resps = []
+
 # Split symbols into chunks for threading
 def split_symbols(symbols, n):
-    """Yield successive n-sized chunks from symbols."""
     for i in range(0, len(symbols), n):
         yield symbols[i:i + n]
 
-# Number of browsers/threads you want to run simultaneously
-num_threads = 1
+num_threads = min(multiprocessing.cpu_count(), 4)
 symbols_chunks = list(split_symbols(symbols, len(symbols) // num_threads))
 
-# Shared list to store responses from all threads
-resps = []
-
-# Create and start threads
 threads = []
 for i in range(num_threads):
-    thread = threading.Thread(target=process_symbols, args=(symbols_chunks[i], resps))
+    thread = threading.Thread(target=process_symbols, args=(symbols_chunks[i], resps, lock, missing_symbols))
     threads.append(thread)
     thread.start()
 
-# Wait for all threads to complete
 for thread in threads:
     thread.join()
 
-# Print the collected responses
-print(resps)
+# Scrape missing symbols if any
+if missing_symbols:
+    print(f"Starting web scraping for missing symbols: {missing_symbols}")
 
-# Define the path and create directory if it doesn't exist
-base_dir = os.path.dirname(os.path.abspath(__file__))  
-save_dir = base_dir  # Keep save_dir as the base directory
-csv_dir = os.path.join(base_dir, 'dividend_yield')
-os.makedirs(csv_dir, exist_ok=True)
+    threads = []
+    symbols_chunks = list(split_symbols(missing_symbols, len(missing_symbols) // num_threads))
+    
+    for i in range(num_threads):
+        thread = threading.Thread(target=web_scrape_missing_symbols, args=(symbols_chunks[i], resps, lock))
+        threads.append(thread)
+        thread.start()
 
-file_path = os.path.join(csv_dir, 'dividend.txt')
+    for thread in threads:
+        thread.join()
 
-# Open the file in write mode with UTF-8 encoding
+# Define the base folder
+base_folder = os.path.dirname(os.path.abspath(__file__))
+dividend_folder = os.path.join(base_folder, 'dividend_yield')
+os.makedirs(dividend_folder, exist_ok=True)
+
+# Save to dividend.txt
+file_path = os.path.join(dividend_folder, 'dividend.txt')
 with open(file_path, "w", encoding="utf-8") as file:
     for item in resps:
         file.write(f"{item}\n")
 
-print('File created successfully.')
+# Save responses to CSV
+csv_file_name = os.path.join(dividend_folder, 'dividend_yield_data.csv')
+with open(csv_file_name, mode='w', newline='', encoding='utf-8') as file:
+    fieldnames = ['symbol', 'dividend', 'ratio', 'xdate', 'dividendType']
+    writer = csv.DictWriter(file, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(resps)
 
-# Check if the file exists before reading it
-if os.path.isfile(file_path):
-    try:
-        # Open the file and read its content
-        with open(file_path, 'r', encoding='utf-8') as file:
-            file_content = file.read()
-
-        print("File content read successfully.")
-
-        # Regular expression to match JSON-like objects with 'type': 'XD'
-        pattern = re.compile(r"\{[^{}]*'type':\s*'XD'[^{}]*\}")
-
-        # Find all matches
-        matches = pattern.findall(file_content)
-
-        dividends_info = []
-
-        # Regular expressions to extract fields
-        symbol_pattern = re.compile(r"'symbol':\s*'([^']*)'")
-        dividend_pattern = re.compile(r"'dividend':\s*([\d.]+)")
-        xdate_pattern = re.compile(r"'xdate':\s*'([^']*)'")
-        dividend_type_pattern = re.compile(r"'dividendType':\s*'([^']*)'")
-        ratio_pattern = re.compile(r"'ratio':\s*'(\d+\s*:\s*\d+|None)'")
-
-        for match in matches:
-            symbol_match = symbol_pattern.search(match)
-            symbol = symbol_match.group(1) if symbol_match else 'N/A'
-
-            dividend_match = dividend_pattern.search(match)
-            dividend = dividend_match.group(1) if dividend_match else 'N/A'
-
-            xdate_match = xdate_pattern.search(match)
-            xdate = xdate_match.group(1) if xdate_match else 'N/A'
-
-            # Reformat xdate to year-month-date
-            if xdate != 'N/A':
-                try:
-                    xdate = datetime.fromisoformat(xdate).strftime('%Y-%m-%d')
-                except ValueError:
-                    xdate = 'N/A'
-
-            dividend_type_match = dividend_type_pattern.search(match)
-            dividend_type = dividend_type_match.group(1) if dividend_type_match else 'N/A'
-
-            ratio_match = ratio_pattern.search(match)
-            ratio = ratio_match.group(1) if ratio_match and ratio_match.group(1) != 'None' else 'N/A'
-
-            dividends_info.append({
-                'symbol': symbol,
-                'dividend': dividend,
-                'ratio': ratio,
-                'xdate': xdate,
-                'dividendType': dividend_type
-            })
-
-        # Specify the CSV file name
-        csv_file_name = os.path.join(csv_dir, 'dividend_yield_data.csv')
-
-        # Open a new CSV file in write mode
-        with open(csv_file_name, mode='w', newline='', encoding='utf-8') as file:
-            # Create a DictWriter object with the fieldnames taken from the keys of the first dictionary
-            fieldnames = ['symbol', 'dividend', 'ratio', 'xdate', 'dividendType']
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-
-            # Write the header row
-            writer.writeheader()
-
-            # Write data rows
-            for dividend_info in dividends_info:
-                writer.writerow(dividend_info)
-
-        print(f'Data written to {csv_file_name}')
-
-    except FileNotFoundError:
-        print("The specified file path does not exist. Please check the path and try again.")
-    except re.error as e:
-        print(f"Regex error: {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+print(f'Data written to {csv_file_name}')
 
 # Read the CSV file and process data
 df = pd.read_csv(csv_file_name)
-
-# Extract the year from the date column
 df['year'] = pd.to_datetime(df['xdate']).dt.year
-
-# Group by the symbol and year, then sum the dividends
 grouped_df = df.groupby(['symbol', 'year'], as_index=False).agg({'dividend': 'sum'})
-
-# Round the summed dividends to 2 decimal places
 grouped_df['dividend'] = grouped_df['dividend'].round(2)
+grouped_df['remark'] = grouped_df['year'].apply(lambda y: f"ข้อมูลผลตอบแทนเงินปันผลประจำปี {y}")
 
-# Save the resulting DataFrame back to a CSV file
-summed_dividend_yield_file = os.path.join(save_dir, 'summed_dividend_yield.csv')  # Save in the base directory
+summed_dividend_yield_file = os.path.join(base_folder, 'summed_dividend_yield.csv')
 grouped_df.to_csv(summed_dividend_yield_file, index=False)
 
 print(f'Process completed successfully. Data saved at {summed_dividend_yield_file}')
+
+# Check for missing symbols
+if missing_symbols:
+    print(f"Missing symbols: {', '.join(missing_symbols)}")
+    
+    # Save missing symbols to CSV
+    missing_symbols_file = os.path.join(dividend_folder, 'missing_symbols.csv')
+    with open(missing_symbols_file, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Missing Symbols'])  # Header
+        for symbol in missing_symbols:
+            writer.writerow([symbol])  # Write each missing symbol
+            
+    print(f'Missing symbols saved to {missing_symbols_file}')
+else:
+    print("All expected symbols have data.")
+
+# Create new folder structure for the result
+result_folder = os.path.join(base_folder, 'result', 'dividend_yield')
+os.makedirs(result_folder, exist_ok=True)
+
+# Generate timestamp for file name
+current_time = datetime.now()
+timestamp = current_time.strftime("date-%Y-%m-%d-time-%H-%M")
+
+# Create new file name with the timestamp
+new_summed_dividend_yield_file = os.path.join(result_folder, f'{timestamp}.csv')
+
+# Save the grouped dividend data to the new CSV file
+grouped_df.to_csv(new_summed_dividend_yield_file, index=False)
+
+print(f'New summarized dividend data saved at {new_summed_dividend_yield_file}')
+
+# Print total expected and retrieved symbols
+expected_symbols = fetch_symbols_from_db()
+retrieved_symbols = set(df['symbol'].unique())
+print(f"Total expected symbols: {len(expected_symbols)}")
+print(f"Total retrieved symbols: {len(retrieved_symbols)}")

@@ -8,6 +8,7 @@ stock/summed_dividend_yield.csv
 stock/last_day_close_price.csv
 stock/close_price/
 stock/dividend_yield/
+stock/result/
 .venv
 node_modules/
 build/

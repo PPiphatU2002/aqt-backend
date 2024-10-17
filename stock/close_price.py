@@ -9,6 +9,7 @@ from tvDatafeed import TvDatafeed, Interval
 import os
 import mysql.connector
 from dotenv import load_dotenv
+from datetime import datetime
 
 # โหลดค่าจากไฟล์ .env
 load_dotenv()
@@ -112,7 +113,7 @@ def export_data_to_csv_multithreaded(data_storage, save_path):
 
 # กำหนด path สำหรับการบันทึกไฟล์
 base_dir = os.path.dirname(os.path.abspath(__file__))  
-save_path = os.path.join(base_dir, 'close_price')  # ปรับให้เป็นโฟลเดอร์ Symbol
+save_path = os.path.join(base_dir, 'close_price', 'symbol')  # ปรับให้เป็นโฟลเดอร์ Symbol
 
 # สร้าง directory ถ้ายังไม่มี
 os.makedirs(save_path, exist_ok=True)
@@ -157,3 +158,19 @@ else:
     print("No last day data to save.")
 
 print("All data fetching and exporting complete.")
+
+result_dir = os.path.join(base_dir, 'result', 'close_price')
+os.makedirs(result_dir, exist_ok=True)
+
+if not last_day_df.empty:
+    last_day_df = last_day_df[['datetime', 'symbol', 'close']]
+    
+    # Format the file name as 'date+YYYY-MM-DD+time+HH-MM.csv'
+    current_time = datetime.now().strftime('date+%Y-%m-%d+time+%H-%M')
+    last_day_save_path = os.path.join(result_dir, f'{current_time}.csv')
+
+    # Save the DataFrame to the new path
+    last_day_df.to_csv(last_day_save_path, index=False)
+    print(f"File saved as {last_day_save_path}")
+else:
+    print("No last day data to save.")

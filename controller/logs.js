@@ -28,12 +28,14 @@ exports.getLog = (req, res) => {
 
 exports.addLogs = (req, res) => {
   try {
-    const { stock_detail_id, stock_id, transaction_id, set_id, form_id, type, action, detail, emp_name, emp_email, picture,time } = req.body;
+    const { stock_detail_id, stock_id, transaction_id, customer_id, set_id, emp_id, form_id, type, action, detail, emp_name, emp_email, picture,time } = req.body;
     const logData = {
       stock_detail_id,
       stock_id,
       transaction_id,
+      customer_id,
       set_id,
+      emp_id,
       form_id,
       type,
       action,

@@ -133,7 +133,7 @@ exports.updateClosePriceByName = async (req, res) => {
 
 exports.updateDividendYieldByName = async (req, res) => {
     try {
-        const { name, dividend_amount, emp_id  } = req.body;
+        const { name, dividend_amount, comment, emp_id  } = req.body;
 
         const [existingStocks] = await connection.promise().query('SELECT * FROM `stocks` WHERE `name` = ?', [name]);
         if (existingStocks.length === 0) {
@@ -143,6 +143,7 @@ exports.updateDividendYieldByName = async (req, res) => {
         const updatedData = {
             emp_id,
             dividend_amount,
+            comment,
             updated_date: new Date()
         };
 
