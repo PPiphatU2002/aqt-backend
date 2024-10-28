@@ -53,20 +53,40 @@ def get_stock_symbols():
 
 def fetch_hist_data(symbol, data_storage, max_retries=3):
     retries = 0
+    original_symbol = symbol  # เก็บชื่อสัญลักษณ์เดิมสำหรับใช้ในภายหลัง
     while retries < max_retries:
         try:
             hist_data_mins = tv.get_hist(symbol=symbol, exchange='SET', interval=Interval.in_1_minute, n_bars=5000)
             with data_lock:
-                data_storage[symbol] = hist_data_mins if hist_data_mins is not None else None
+                data_storage[original_symbol] = hist_data_mins if hist_data_mins is not None else None
             if hist_data_mins is not None:
                 break
             else:
-                raise ValueError("No data fetched")
+                raise ValueError("ไม่พบข้อมูลที่ดึงมา")
         except Exception as e:
-            print(f"Error fetching data for {symbol}: {e}")
+            print(f"เกิดข้อผิดพลาดในการดึงข้อมูลสำหรับ {symbol}: {e}")
             retries += 1
             time.sleep(1)
+    
     if retries == max_retries:
+        # พยายามดึงข้อมูลด้วยสัญลักษณ์ที่แก้ไข
+        modified_symbol = symbol.replace('-', '.')
+        retries = 0  # รีเซ็ตการลองใหม่สำหรับสัญลักษณ์ใหม่
+        while retries < max_retries:
+            try:
+                hist_data_mins = tv.get_hist(symbol=modified_symbol, exchange='SET', interval=Interval.in_1_minute, n_bars=5000)
+                with data_lock:
+                    data_storage[original_symbol] = hist_data_mins if hist_data_mins is not None else None
+                if hist_data_mins is not None:
+                    break
+                else:
+                    raise ValueError("The retrieved data was not found")
+            except Exception as e:
+                print(f"There was an error retrieving data for {modified_symbol}: {e}")
+                retries += 1
+                time.sleep(1)
+        
+        # เก็บชื่อสัญลักษณ์ที่มีข้อผิดพลาด
         with data_lock:
             if symbol not in error_symbols:
                 error_symbols.append(symbol)
@@ -98,6 +118,7 @@ def export_symbol_data(symbol, data, save_path):
         data_df.reset_index(inplace=True)
     if 'datetime' in data_df.columns:
         data_df['datetime'] = pd.to_datetime(data_df['datetime']).dt.strftime('%Y-%m-%d %H:%M:%S')
+    # ใช้ชื่อสัญลักษณ์เดิมสำหรับชื่อไฟล์
     csv_file_name = f"{symbol}_data.csv"
     full_path = os.path.join(save_path, csv_file_name)
     data_df.to_csv(full_path, index=False)
@@ -166,7 +187,7 @@ if not last_day_df.empty:
     last_day_df = last_day_df[['datetime', 'symbol', 'close']]
     
     # Format the file name as 'date+YYYY-MM-DD+time+HH-MM.csv'
-    current_time = datetime.now().strftime('date+%Y-%m-%d+time+%H-%M')
+    current_time = datetime.now().strftime('%Y-%m-%d-%H-%M_close_price')
     last_day_save_path = os.path.join(result_dir, f'{current_time}.csv')
 
     # Save the DataFrame to the new path
