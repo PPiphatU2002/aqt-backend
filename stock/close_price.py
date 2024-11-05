@@ -62,9 +62,9 @@ def fetch_hist_data(symbol, data_storage, max_retries=3):
             if hist_data_mins is not None:
                 break
             else:
-                raise ValueError("ไม่พบข้อมูลที่ดึงมา")
+                raise ValueError("The retrieved data was not found")
         except Exception as e:
-            print(f"เกิดข้อผิดพลาดในการดึงข้อมูลสำหรับ {symbol}: {e}")
+            print(f"There was an error retrieving data for {symbol}: {e}")
             retries += 1
             time.sleep(1)
     
@@ -187,7 +187,7 @@ if not last_day_df.empty:
     last_day_df = last_day_df[['datetime', 'symbol', 'close']]
     
     # Format the file name as 'date+YYYY-MM-DD+time+HH-MM.csv'
-    current_time = datetime.now().strftime('%Y-%m-%d-%H-%M_close_price')
+    current_time = datetime.now().strftime('%Y_%m_%d_%H_%M_close_price')
     last_day_save_path = os.path.join(result_dir, f'{current_time}.csv')
 
     # Save the DataFrame to the new path

@@ -19,22 +19,17 @@ exports.getTransaction = (req, res) => {
 
 exports.addTransaction = async (req, res) => {
     try {
-        const { stock_detail_id, buy_amount, buy_price, buy_result, buy_comfee, buy_vat, buy_total, sale_amount, sale_price, sale_result, sale_comfee, sale_vat, sale_total, commission_id, emp_id, created_date, updated_date } = req.body;
+        const { stock_detail_id, type, amount, price, result, comfee, vat, total, commission_id, emp_id, created_date, updated_date } = req.body;
         
         const detailData = {
             stock_detail_id,
-            buy_amount,
-            buy_price,
-            buy_result,
-            buy_comfee,
-            buy_vat,
-            buy_total,
-            sale_amount,
-            sale_price,
-            sale_result,
-            sale_comfee,
-            sale_vat,
-            sale_total,
+            type,
+            amount,
+            price,
+            result,
+            comfee,
+            vat,
+            total,
             commission_id,
             emp_id,
             created_date,
@@ -57,11 +52,11 @@ exports.addTransaction = async (req, res) => {
 
 exports.updateTransaction = async (req, res) => {
     try {
-        const { stock_detail_id , buy_amount, buy_price, buy_result, buy_comfee	, buy_vat, buy_total, sale_amount, sale_price, sale_result, sale_comfee, sale_vat, sale_total, commission_id, emp_id } = req.body;
+        const { stock_detail_id, type, amount, price, result, comfee	, vat, total,commission_id, emp_id } = req.body;
         const detailNo = req.params.no;
 
-        connection.query('UPDATE `transactions` SET `stock_detail_id`= ?, `buy_amount`= ?, `buy_price`= ?, `buy_result`= ?, `buy_comfee`= ?, `buy_vat`= ?, `buy_total`= ?, `sale_amount`= ?, `sale_price`= ?, `sale_result`= ?, `sale_comfee`= ?, `sale_vat`= ?, `sale_total`= ?, `commission_id`= ?, `emp_id`= ?, `updated_date`= NOW() WHERE no = ?',
-            [stock_detail_id, buy_amount, buy_price, buy_result, buy_comfee, buy_vat, buy_total, sale_amount, sale_price, sale_result, sale_comfee, sale_vat, sale_total, commission_id, emp_id, detailNo], function (err, results) {
+        connection.query('UPDATE `transactions` SET `stock_detail_id`= ?, `type`= ?, `amount`= ?, `price`= ?, `result`= ?, `comfee`= ?, `vat`= ?, `total`= ?, `commission_id`= ?, `emp_id`= ?, `updated_date`= NOW() WHERE no = ?',
+            [stock_detail_id, type, amount, price, result, comfee, vat, total, commission_id, emp_id, detailNo], function (err, results) {
                 if (err) {
                     console.error(err);
                     return res.status(500).json({ message: "Error updating detail" });

@@ -29,6 +29,7 @@ const baseRoutes = require('./routes/base');
 const detailRoutes = require('./routes/detail');
 const transactionRoutes = require('./routes/transaction');
 const commissionRoutes = require('./routes/commission');
+const dividendRoutes = require('./routes/dividend');
 
 // ใช้ cors สำหรับการทำ Cross-Origin Resource Sharing
 app.use(cors({
@@ -60,6 +61,7 @@ app.use('/base', baseRoutes);
 app.use('/detail', detailRoutes);
 app.use('/transaction', transactionRoutes);
 app.use('/commission', commissionRoutes);
+app.use('/dividend', dividendRoutes);
 
 // สร้าง route ทดสอบ
 app.get('/', (req, res) => {
@@ -131,7 +133,7 @@ app.get('/run-dividend-yield', (req, res) => {
     dividendProcess.on('close', (code) => {
         console.log(`Python script exited with code ${code}`);
         if (code === 0) {
-            const filePath = path.join(__dirname, 'stock', 'summed_dividend_yield.csv');
+            const filePath = path.join(__dirname, 'stock', 'dividend_yield', 'dividend_yield_data.csv');
             fs.readFile(filePath, 'utf8', (err, data) => {
                 if (err) {
                     console.error('Error reading CSV file:', err);

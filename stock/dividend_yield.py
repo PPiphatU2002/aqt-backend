@@ -134,6 +134,10 @@ dividend_yield_data_file = os.path.join(save_dir, 'dividend_yield', 'dividend_yi
 # Dividend text file path
 dividend_txt_file = os.path.join(save_dir, 'dividend_yield', 'dividend.txt')
 
+# Summed dividend yield file path
+timestamped_file_name = datetime.now().strftime('%Y_%m_%d_%H_%M_dividend_yield_data.csv')
+result_dividend_yield_data_file = os.path.join(save_dir, 'result', 'dividend_yield', timestamped_file_name)
+
 # Process and save responses to CSV
 dividends_info = []
 
@@ -192,27 +196,13 @@ grouped_df = df.groupby(['symbol', 'year'], as_index=False).agg({'dividend': 'su
 # Round the summed dividends to 2 decimal places
 grouped_df['dividend'] = grouped_df['dividend'].round(2)
 
-# Write the grouped data to the summed_dividend_yield_file
-with open(summed_dividend_yield_file, mode='w', newline='', encoding='utf-8') as file:
-    fieldnames = ['symbol', 'dividend', 'ratio', 'xdate', 'dividendType']
-    writer = csv.DictWriter(file, fieldnames=fieldnames)
-    writer.writeheader()
-    # Use grouped_df to write the summed data instead of dividends_info
-    for _, row in grouped_df.iterrows():
-        writer.writerow({
-            'symbol': row['symbol'],
-            'dividend': row['dividend'],
-            'ratio': 'N/A',  # Add appropriate value or handle if needed
-            'xdate': 'N/A',  # Add appropriate value or handle if needed
-            'dividendType': 'N/A'  # Add appropriate value or handle if needed
-        })
+# Write the grouped data to the summed_dividend_yield_file, overwriting it
+grouped_df.to_csv(summed_dividend_yield_file, index=False, columns=['year', 'symbol', 'dividend'])
+
+# Write the grouped data to the summed_dividend_yield_file, overwriting it
+grouped_df.to_csv(result_dividend_yield_data_file, index=False, columns=['year', 'symbol', 'dividend'])
 
 print(f'Data written to {summed_dividend_yield_file}')
 
-# Create a timestamped copy of the grouped DataFrame
-file_date = datetime.now().strftime('%Y-%m-%d-%H-%M')
-timestamped_file_path = os.path.join(csv_dir, f'{file_date}_summed_dividend_yield.csv')
-
-# Save the grouped data with timestamped name
-grouped_df.to_csv(timestamped_file_path, index=False)
-print(f'Process completed successfully. Data saved at {timestamped_file_path}')
+# No need for a timestamped copy since it is already handled
+print('Process completed successfully.')
