@@ -30,6 +30,7 @@ const detailRoutes = require('./routes/detail');
 const transactionRoutes = require('./routes/transaction');
 const commissionRoutes = require('./routes/commission');
 const dividendRoutes = require('./routes/dividend');
+const followRoutes = require('./routes/follow');
 
 // ใช้ cors สำหรับการทำ Cross-Origin Resource Sharing
 app.use(cors({
@@ -62,6 +63,7 @@ app.use('/detail', detailRoutes);
 app.use('/transaction', transactionRoutes);
 app.use('/commission', commissionRoutes);
 app.use('/dividend', dividendRoutes);
+app.use('/follow', followRoutes);
 
 // สร้าง route ทดสอบ
 app.get('/', (req, res) => {

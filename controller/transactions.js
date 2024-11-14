@@ -19,18 +19,15 @@ exports.getTransaction = (req, res) => {
 
 exports.addTransaction = async (req, res) => {
     try {
-        const { stock_detail_id, type, amount, price, result, comfee, vat, total, commission_id, emp_id, created_date, updated_date } = req.body;
+        const { stock_detail_id, type, amount, price, commission_id, from_id, emp_id, created_date, updated_date } = req.body;
         
         const detailData = {
             stock_detail_id,
             type,
             amount,
             price,
-            result,
-            comfee,
-            vat,
-            total,
             commission_id,
+            from_id,
             emp_id,
             created_date,
             updated_date,
@@ -52,11 +49,11 @@ exports.addTransaction = async (req, res) => {
 
 exports.updateTransaction = async (req, res) => {
     try {
-        const { stock_detail_id, type, amount, price, result, comfee	, vat, total,commission_id, emp_id } = req.body;
+        const { stock_detail_id, type, amount, price,commission_id, emp_id } = req.body;
         const detailNo = req.params.no;
 
-        connection.query('UPDATE `transactions` SET `stock_detail_id`= ?, `type`= ?, `amount`= ?, `price`= ?, `result`= ?, `comfee`= ?, `vat`= ?, `total`= ?, `commission_id`= ?, `emp_id`= ?, `updated_date`= NOW() WHERE no = ?',
-            [stock_detail_id, type, amount, price, result, comfee, vat, total, commission_id, emp_id, detailNo], function (err, results) {
+        connection.query('UPDATE `transactions` SET `stock_detail_id`= ?, `type`= ?, `amount`= ?, `price`= ?, `commission_id`= ?, `emp_id`= ?, `updated_date`= NOW() WHERE no = ?',
+            [stock_detail_id, type, amount, price, commission_id, emp_id, detailNo], function (err, results) {
                 if (err) {
                     console.error(err);
                     return res.status(500).json({ message: "Error updating detail" });

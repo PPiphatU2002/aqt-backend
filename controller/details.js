@@ -19,21 +19,13 @@ exports.getDetail = (req, res) => {
 
 exports.addDetail = async (req, res) => {
     try {
-        const { customer_id, stock_id, price, amount, money, balance_dividend, present_price, total, present_profit, percent, total_percent, port, from_id, comment, emp_id, created_date, updated_date } = req.body;
+        const { customer_id, stock_id, price, amount, from_id, comment, emp_id, created_date, updated_date } = req.body;
         
         const detailData = {
             customer_id,
             stock_id,
             price,
             amount,
-            money,
-            balance_dividend,
-            present_price,
-            total,
-            present_profit,
-            percent,
-            total_percent,
-            port,
             from_id,
             comment,
             emp_id,
@@ -57,11 +49,32 @@ exports.addDetail = async (req, res) => {
 
 exports.updateDetail = async (req, res) => {
     try {
-        const { customer_id, stock_id, price, amount, money, balance_dividend, present_price, total, present_profit, percent, total_percent, port, from_id, comment, emp_id } = req.body;
+        const { customer_id, stock_id, price, amount, from_id, comment, emp_id, created_date, } = req.body;
         const detailNo = req.params.no;
 
-        connection.query('UPDATE `stocks_detail` SET `customer_id`= ?, `stock_id`= ?, `price`= ?, `amount`= ?, `money`= ?, `balance_dividend`= ?, `present_price`= ?, `total`= ?, `present_profit`= ?, `percent`= ?, `total_percent`= ?, `port`= ?, `from_id`= ?, `comment`= ?, `emp_id`= ?, `updated_date`= NOW() WHERE no = ?',
-            [customer_id, stock_id, price, amount, money, balance_dividend, present_price, total, present_profit, percent, total_percent, port, from_id, comment, emp_id, detailNo], function (err, results) {
+        connection.query('UPDATE `stocks_detail` SET `customer_id`= ?, `stock_id`= ?, `price`= ?, `amount`= ?, `from_id`= ?, `comment`= ?, `emp_id`= ?, `created_date`= ?, `updated_date`= NOW() WHERE no = ?',
+            [customer_id, stock_id, price, amount, from_id, comment, emp_id, created_date, detailNo], function (err, results) {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ message: "Error updating detail" });
+                }
+                res.json({ message: "Detail updated", results });
+            }
+        );
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+exports.updateDetailbyTransaction = async (req, res) => {
+    try {
+        const { price, amount } = req.body;
+        const detailNo = req.params.no;
+
+        connection.query('UPDATE `stocks_detail` SET  `price`= ?, `amount`= ?, `updated_date`= NOW() WHERE no = ?',
+            [price, amount, detailNo], function (err, results) {
                 if (err) {
                     console.error(err);
                     return res.status(500).json({ message: "Error updating detail" });
